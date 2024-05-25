@@ -272,7 +272,10 @@ async def hint_answer(call: types.CallbackQuery):
     question = test_dataframe[test_dataframe["id"] == int(question_id)]
 
     if not question.empty:
-        await call.answer(text=str(question["havola"]), show_alert=True)
+        await call.answer(
+            text=str(question["havola"].first()),
+            show_alert=True,
+        )
     else:
         await call.answer(text="❌Information not found", show_alert=True)
 
