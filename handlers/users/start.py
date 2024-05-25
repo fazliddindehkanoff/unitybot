@@ -149,6 +149,8 @@ async def notify_students():
                 db=db,
                 bot=bot,
             )
+            print("har kuni shu vaqtda jo'natilishi kerak")
+            print(earlier_time)
 
         if today_day_number in lesson_days_in_number:
             await invite_to_test(
