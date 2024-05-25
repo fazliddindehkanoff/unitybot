@@ -2,21 +2,18 @@ import gspread
 import json
 import pandas as pd
 
-
 from aiogram import Router, types, F
 from aiogram.filters import Command
 from aiogram.fsm.context import FSMContext
 from aiogram.types import ReplyKeyboardRemove
 from filters.admin import IsBotAdminFilter
-from data.config import ADMINS
+from data.config import ADMINS, BOT_TOKEN
 from keyboards.inline.base_menu import base
 from loader import bot, db
 
 
 router = Router()
 
-
-API_TOKEN = "6628110361:AAE-AOZ4MeoYmJDtqnwC8_MyHEsn7VFRy74"
 
 with open("credentials.json", "r") as file:
     key_data = json.load(file)
@@ -124,7 +121,7 @@ async def receive_files(message: types.Message):
         file_path = file_info.file_path
 
         # Create the file link
-        file_link = f"https://api.telegram.org/file/bot{API_TOKEN}/{file_path}"
+        file_link = f"https://api.telegram.org/file/bot{BOT_TOKEN}/{file_path}"
 
         # Use the file name from the message
         file_name = message.document.file_name
