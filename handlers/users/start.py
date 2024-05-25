@@ -268,13 +268,11 @@ async def check_location(message: types.Message):
 @router.callback_query(lambda c: c.data and c.data.startswith("hint_ans"))
 async def hint_answer(call: types.CallbackQuery):
     question_id = call.data.split(":")[-1]
-    print(question_id)
     test_dataframe = pandas.DataFrame(tests.get_all_records())
     question = test_dataframe[test_dataframe["id"] == int(question_id)]
-    print(question)
 
     if not question.empty:
-        await call.answer(text=str(question["havola"][0]), show_alert=True)
+        await call.answer(text=str(question["havola"]), show_alert=True)
     else:
         await call.answer(text="❌Information not found", show_alert=True)
 
