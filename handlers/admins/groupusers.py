@@ -31,8 +31,7 @@ sh = gc.open("base")
 
 crm = sh.get_worksheet(0)
 groups = sh.get_worksheet(2)
-tests = sh.get_worksheet(4)
-users = sh.get_worksheet(3)
+tests = sh.get_worksheet(3)
 
 
 @router.callback_query(F.data == "tests", IsBotAdminFilter(ADMINS))
@@ -251,7 +250,7 @@ async def question_1(message: types.Message):
     user_answer = remove_extra_whitespace(message.text.lower())
 
     if user_answer in correct_answers_list:
-        davomat = sh.get_worksheet(5)
+        davomat = sh.get_worksheet(4)
         crm_df = pandas.DataFrame(crm.get_all_records())
         student = crm_df[crm_df["ID"] == student_id]
 

@@ -30,9 +30,9 @@ with open("credentials.json", "r") as file:
 
 gc = gspread.service_account_from_dict(key_data)
 sheet = gc.open("base")
-groups = sheet.get_worksheet(2)
-tests = sheet.get_worksheet(4)
 crm = sheet.get_worksheet(0)
+groups = sheet.get_worksheet(2)
+tests = sheet.get_worksheet(3)
 
 
 @router.message(CommandStart())
@@ -307,7 +307,7 @@ async def question_1(message: types.Message):
         teacher = group_data["Ustoz"].values[0]
         date = group_data["Kunlari"].values[0]
         time = group_data["Vaqti"].values[0]
-        davomat = sheet.get_worksheet(5)
+        davomat = sheet.get_worksheet(4)
 
         now = datetime.now()
         date_time = now.strftime("%m/%d/%Y")
