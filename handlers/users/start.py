@@ -273,7 +273,7 @@ async def hint_answer(call: types.CallbackQuery):
 
     if not question.empty:
         await call.answer(
-            text=str(question["havola"].first()),
+            text=str(question["havola"].values(0)),
             show_alert=True,
         )
     else:
