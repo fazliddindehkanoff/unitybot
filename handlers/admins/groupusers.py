@@ -210,7 +210,10 @@ async def get_user(callback_data: types.CallbackQuery, state: FSMContext):
     )
 
 
-@router.callback_query(lambda c: c.data and c.data.startswith("hint_ans"))
+@router.callback_query(
+    lambda c: c.data and c.data.startswith("hint_ans"),
+    IsBotAdminFilter(ADMINS),
+)
 async def hint_answer(call: types.CallbackQuery):
     question_id = call.data.split(":")[-1]
     test_dataframe = pandas.DataFrame(tests.get_all_records())
@@ -228,7 +231,8 @@ async def hint_answer(call: types.CallbackQuery):
 @router.message(
     lambda message: db.get_user_telegram_id(telegram_id=message.from_user.id)[
         10
-    ].startswith("answer")
+    ].startswith("answer"),
+    IsBotAdminFilter(ADMINS),
 )
 async def question_1(message: types.Message):
     user = db.get_user_telegram_id(telegram_id=message.from_user.id)
