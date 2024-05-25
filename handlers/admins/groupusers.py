@@ -108,7 +108,6 @@ async def get_group(callback_data: types.CallbackQuery, state: FSMContext):
     status_counts = group_students_df["Status"].value_counts().to_dict()
     gone_students_count = status_counts.get("Gone", 0)
     stopped_students_count = status_counts.get("Stopped", 0)
-    print(status_counts)
 
     # Get list of active students
     active_students = group_students_df[group_students_df["Status"] == "Here"][
@@ -214,10 +213,8 @@ async def get_user(callback_data: types.CallbackQuery, state: FSMContext):
 @router.callback_query(lambda c: c.data and c.data.startswith("hint_ans"))
 async def hint_answer(call: types.CallbackQuery):
     question_id = call.data.split(":")[-1]
-    print(question_id)
     test_dataframe = pandas.DataFrame(tests.get_all_records())
     question = test_dataframe[test_dataframe["id"] == int(question_id)]
-    print(str(question["havola"].iloc[0]))
 
     if not question.empty:
         await call.answer(
@@ -429,7 +426,6 @@ async def sending_to_users(message: types.Message, state: FSMContext):
     all_users = db.get_group_for_users(group_number=group_number_for_post)
     for row in all_users:
         chat_id = row[4]
-        print(chat_id)
 
         try:
             if media_type == "photo":

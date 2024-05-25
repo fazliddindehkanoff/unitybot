@@ -149,7 +149,6 @@ async def notify_students():
                 db=db,
                 bot=bot,
             )
-            print(f"Har kuni: {earlier_time} vaqtda habar yuborish kerak")
 
         if today_day_number in lesson_days_in_number:
             await invite_to_test(
@@ -159,7 +158,6 @@ async def notify_students():
                 db=db,
                 bot=bot,
             )
-            print(f"Bugun: {earlier_time} vaqtda habar yuborish kerak")
 
 
 async def schedule_notifications():
@@ -273,7 +271,7 @@ async def hint_answer(call: types.CallbackQuery):
 
     if not question.empty:
         await call.answer(
-            text=str(question["havola"].values(0)),
+            text=str(question["havola"].iloc[0]),
             show_alert=True,
         )
     else:
