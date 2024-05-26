@@ -129,7 +129,6 @@ async def notify_students():
     }
 
     groups_dataframe = pandas.DataFrame(groups.get_all_records())
-    print("working")
     for _, group in groups_dataframe[
         groups_dataframe["Status"] == "Boshlangan"
     ].iterrows():
@@ -163,7 +162,9 @@ async def notify_students():
 
 
 async def schedule_notifications():
+    print("scheduling notifications function called")
     while True:
+        print("while is working")
         await notify_students()
         await asyncio.sleep(60)
 
