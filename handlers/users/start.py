@@ -129,7 +129,7 @@ async def notify_students():
     }
 
     groups_dataframe = pandas.DataFrame(groups.get_all_records())
-
+    print("working")
     for _, group in groups_dataframe[
         groups_dataframe["Status"] == "Boshlangan"
     ].iterrows():
@@ -168,7 +168,9 @@ async def schedule_notifications():
         await asyncio.sleep(60)
 
 
-@router.callback_query(lambda c: c.data and c.data.startswith("test#"))
+@router.callback_query(
+    lambda c: c.data.startswith("test#") and not IsBotAdminFilter(ADMINS)
+)
 async def process_callback_test(callback_query: types.CallbackQuery):
     try:
         sending_time_str = callback_query.data.split("#")[1]
@@ -265,7 +267,9 @@ async def check_location(message: types.Message):
         await message.reply("Siz hali markazimiz hududida emas ekansiz!")
 
 
-@router.callback_query(lambda c: c.data and c.data.startswith("hint_ans"))
+@router.callback_query(
+    lambda c: c.data.startswith("hint_ans") and not IsBotAdminFilter(ADMINS)
+)
 async def hint_answer(call: types.CallbackQuery):
     question_id = call.data.split(":")[-1]
     test_dataframe = pandas.DataFrame(tests.get_all_records())
