@@ -11,7 +11,6 @@ from aiogram.filters import CommandStart
 from aiogram.fsm.context import FSMContext
 from aiogram.utils.keyboard import InlineKeyboardButton, InlineKeyboardBuilder
 
-from data.config import ADMINS
 from filters.admin import IsBotAdminFilter
 from loader import bot, db
 from keyboards.inline.menu_user import location_keyboard
@@ -170,7 +169,8 @@ async def schedule_notifications():
 
 
 @router.callback_query(
-    lambda c: c.data.startswith("test#") and not IsBotAdminFilter(ADMINS)
+    lambda callback_query: callback_query.data.startswith("test#")
+    and not IsBotAdminFilter(callback_query.from_user.id)
 )
 async def process_callback_test(callback_query: types.CallbackQuery):
     try:
@@ -182,7 +182,7 @@ async def process_callback_test(callback_query: types.CallbackQuery):
         current_time = datetime.now()
         time_difference = current_time - sending_time
 
-        if time_difference > timedelta(minutes=25):
+        if time_difference > timedelta(minutes=60):
             await bot.answer_callback_query(
                 callback_query.id,
                 text="Davomatga olish vaqti tugagan.",
@@ -208,6 +208,7 @@ async def process_callback_test(callback_query: types.CallbackQuery):
 
 @router.message(
     lambda message: db.get_user_state(message.from_user.id) == "check_location"
+    and not IsBotAdminFilter(message.from_user.id)
 )
 async def check_location(message: types.Message):
     if not message.location:
@@ -269,7 +270,8 @@ async def check_location(message: types.Message):
 
 
 @router.callback_query(
-    lambda c: c.data.startswith("hint_ans") and not IsBotAdminFilter(ADMINS)
+    lambda callback_query: callback_query.data.startswith("hint_ans")
+    and not IsBotAdminFilter(callback_query.from_user.id)
 )
 async def hint_answer(call: types.CallbackQuery):
     question_id = call.data.split(":")[-1]
@@ -289,7 +291,7 @@ async def hint_answer(call: types.CallbackQuery):
     lambda message: db.get_user_state(
         telegram_id=message.from_user.id  # noqa
     ).startswith("answer")
-    and not IsBotAdminFilter(ADMINS),
+    and not IsBotAdminFilter(message.from_user.id)
 )
 async def question_1(message: types.Message):
     user = db.get_user_telegram_id(telegram_id=message.from_user.id)
