@@ -168,10 +168,7 @@ async def schedule_notifications():
         await asyncio.sleep(60)
 
 
-@router.callback_query(
-    lambda callback_query: callback_query.data.startswith("test#")
-    and not IsBotAdminFilter(callback_query.from_user.id)
-)
+@router.callback_query(lambda callback_query: callback_query.data.startswith("test#"))
 async def process_callback_test(callback_query: types.CallbackQuery):
     try:
         sending_time_str = callback_query.data.split("#")[1]
