@@ -70,10 +70,10 @@ async def do_start(message: types.Message, state: FSMContext):
         await message.answer(
             f"""Assalomu alaykum {full_name}\nSizga berilgan login kiritish orqali profilingizga kiring Bir login orqali faqat bitta telegram hisob bilan kira olasiz""",  # noqa
         )
-        await state.set_state(Login.student_id)
+        db.update_state(message.from_user.id, "login")
 
 
-@router.message(Login.student_id)
+@router.message(lambda msg: db.get_user_state(msg.from_user.id) == "login")
 async def get_login(message: types.Message, state: FSMContext, bot: Bot):
     user_id = message.text.lower()
     crm_dateframe = pandas.DataFrame(crm.get_all_records())
