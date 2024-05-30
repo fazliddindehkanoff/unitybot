@@ -160,3 +160,4 @@ cython_debug/
 .idea/
 data/*.xlsx
 credentials.json
+sqlite3.db

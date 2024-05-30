@@ -168,7 +168,7 @@ async def schedule_notifications():
         await asyncio.sleep(60)
 
 
-@router.callback_query(lambda callback_query: callback_query.data.startswith("test#"))
+@router.callback_query(lambda callback: callback.data.startswith("test#"))
 async def process_callback_test(callback_query: types.CallbackQuery):
     try:
         sending_time_str = callback_query.data.split("#")[1]
@@ -178,6 +178,7 @@ async def process_callback_test(callback_query: types.CallbackQuery):
         )
         current_time = datetime.now()
         time_difference = current_time - sending_time
+        await callback_query.message.delete()
 
         if time_difference > timedelta(minutes=60):
             await bot.answer_callback_query(
@@ -185,7 +186,6 @@ async def process_callback_test(callback_query: types.CallbackQuery):
                 text="Davomatga olish vaqti tugagan.",
                 show_alert=True,
             )
-            await callback_query.message.delete()
 
         else:
             await callback_query.message.answer(
@@ -205,7 +205,6 @@ async def process_callback_test(callback_query: types.CallbackQuery):
 
 @router.message(
     lambda message: db.get_user_state(message.from_user.id) == "check_location"
-    and not IsBotAdminFilter(message.from_user.id)
 )
 async def check_location(message: types.Message):
     if not message.location:
@@ -268,7 +267,6 @@ async def check_location(message: types.Message):
 
 @router.callback_query(
     lambda callback_query: callback_query.data.startswith("hint_ans")
-    and not IsBotAdminFilter(callback_query.from_user.id)
 )
 async def hint_answer(call: types.CallbackQuery):
     question_id = call.data.split(":")[-1]
@@ -288,7 +286,6 @@ async def hint_answer(call: types.CallbackQuery):
     lambda message: db.get_user_state(
         telegram_id=message.from_user.id  # noqa
     ).startswith("answer")
-    and not IsBotAdminFilter(message.from_user.id)
 )
 async def question_1(message: types.Message):
     user = db.get_user_telegram_id(telegram_id=message.from_user.id)
