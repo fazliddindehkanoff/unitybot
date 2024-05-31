@@ -237,9 +237,9 @@ async def hint_answer(call: types.CallbackQuery):
 
 
 @router.message(
-    lambda message: db.get_user_telegram_id(telegram_id=message.from_user.id)[
-        10
-    ].startswith("answer")
+    lambda message: db.get_user_telegram_id(
+        telegram_id=message.from_user.id
+    ).state.startswith("answer")
     and str(message.from_user.id) in ADMINS,
 )
 async def question_1(message: types.Message):

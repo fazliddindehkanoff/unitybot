@@ -123,7 +123,7 @@ async def get_documents(call: types.CallbackQuery):
 
 @router.message(
     lambda msg: str(msg.from_user.id) in ADMINS,
-    lambda msg: db.get_user_telegram_id(msg.from_user.id)[10] == "send_docs",
+    lambda msg: db.get_user_telegram_id(msg.from_user.id).state == "send_docs",
 )
 async def receive_files(message: types.Message):
     try:
