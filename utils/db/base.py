@@ -1,30 +1,34 @@
-import sqlite3
 from typing import Union
+from sqlalchemy import create_engine, Column, Integer, String
+from sqlalchemy.ext.declarative import declarative_base
+from sqlalchemy.orm import sessionmaker
+
+Base = declarative_base()
+
+
+class User(Base):
+    __tablename__ = "users"
+
+    id = Column(Integer, primary_key=True)
+    first_name = Column(String)
+    last_name = Column(String)
+    full_name = Column(String)
+    darajasi = Column(String)
+    state = Column(String)
+    username = Column(String)
+    telegram_id = Column(Integer, unique=True)
+    student_id = Column(String, unique=True)
+    added_at = Column(String)
+    guruh = Column(String)
 
 
 class Database:
-    def __init__(self, db_name: str):
-        self.conn = sqlite3.connect(db_name, check_same_thread=False)
-        self.cursor = self.conn.cursor()
+    def __init__(self, db_url: str):
+        self.engine = create_engine(db_url)
+        self.Session = sessionmaker(bind=self.engine)
 
     def create_table_users(self):
-        sql = """
-        CREATE TABLE IF NOT EXISTS Users (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            first_name TEXT NULL,
-            last_name TEXT NULL,
-            username TEXT,
-            telegram_id INTEGER NOT NULL UNIQUE,
-            student_id TEXT UNIQUE,
-            added_at TEXT,
-            guruh TEXT NULL,
-            full_name TEXT NULL,
-            darajasi TEXT NULL,
-            state TEXT NULL
-        );
-        """
-        self.cursor.execute(sql)
-        self.conn.commit()
+        Base.metadata.create_all(self.engine)
 
     def add_user(
         self,
@@ -39,139 +43,127 @@ class Database:
         added_at: Union[str, None] = None,
         guruh: Union[str, None] = None,
     ):
-        sql = "INSERT INTO Users (first_name, last_name, full_name, darajasi, state, username, telegram_id, student_id, added_at, guruh) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"  # noqa
-        self.cursor.execute(
-            sql,
-            (
-                first_name,
-                last_name,
-                full_name,
-                darajasi,
-                state,
-                username,
-                telegram_id,
-                student_id,
-                added_at,
-                guruh,
-            ),
+        user = User(
+            first_name=first_name,
+            last_name=last_name,
+            full_name=full_name,
+            darajasi=darajasi,
+            username=username,
+            telegram_id=telegram_id,
+            state=state,
+            student_id=student_id,
+            added_at=added_at,
+            guruh=guruh,
         )
-        self.conn.commit()
+        session = self.Session()
+        session.add(user)
+        session.commit()
 
     def select_all_users(self):
-        sql = "SELECT * FROM Users"
-        self.cursor.execute(sql)
-        return self.cursor.fetchall()
+        session = self.Session()
+        return session.query(User).all()
 
     def get_user_telegram_id(self, telegram_id: int):
-        sql = "SELECT * FROM users WHERE telegram_id = ?"
-        self.cursor.execute(sql, (telegram_id,))
-        user = self.cursor.fetchone()
-
-        return user
+        session = self.Session()
+        return session.query(User).filter_by(telegram_id=telegram_id).first()
 
     def get_user_state(self, telegram_id: int):
-        sql = "SELECT * FROM users WHERE telegram_id = ?"
-        self.cursor.execute(sql, (telegram_id,))
-        user = self.cursor.fetchone()
+        session = self.Session()
+        user = session.query(User).filter_by(telegram_id=telegram_id).first()
         if user:
-            return user[10]
+            return user.state
         return ""
 
     def get_group_for_users(self, group_number: str):
-        data = (group_number,)
-        sql = "SELECT * FROM Users WHERE guruh = ?"
-        self.cursor.execute(sql, data)
-        users = self.cursor.fetchall()
-        return users
+        session = self.Session()
+        return session.query(User).filter_by(guruh=group_number).all()
 
     def is_student_id(self, telegram_id: int) -> bool:
         user = self.get_user_telegram_id(telegram_id)
-        if user and user[5] is not None:
+        if user and user.student_id is not None:
             return True
         else:
             return False
 
     def is_student_full_name(self, telegram_id: int) -> bool:
         user = self.get_user_telegram_id(telegram_id=telegram_id)
-
-        if user and user[8] is not None:
+        if user and user.full_name is not None:
             return True
         else:
             return False
 
     def check_student_id(self, student_id) -> bool:
-        users = self.select_all_users()
-        for user in users:
-            if user and user[5] == student_id:
-                return True
-        return False
+        session = self.Session()
+        return (
+            session.query(User).filter_by(student_id=student_id).first()
+            is not None  # noqa
+        )
 
     def check_student_group(self, user_id):
-        users = self.select_all_users()
-
-        for user in users:
-            if user and user[7]:
-                return user[7]
-            else:
-                return False
+        session = self.Session()
+        user = session.query(User).filter_by(id=user_id).first()
+        if user and user.guruh:
+            return user.guruh
+        else:
+            return False
 
     def update_student_id(self, chat_id, student_id):
-        data = (student_id, chat_id)
-        sql = "UPDATE Users SET student_id = ? WHERE telegram_id = ?"
-        self.cursor.execute(sql, data)
-        self.conn.commit()
+        session = self.Session()
+        user = session.query(User).filter_by(telegram_id=chat_id).first()
+        if user:
+            user.student_id = student_id
+            session.commit()
 
     def update_state(self, chat_id, state):
-        data = (state, chat_id)
-        sql = "UPDATE Users SET state = ? WHERE telegram_id = ?"
-        self.cursor.execute(sql, data)
-        self.conn.commit()
+        session = self.Session()
+        user = session.query(User).filter_by(telegram_id=chat_id).first()
+        if user:
+            user.state = state
+            session.commit()
 
     def update_user_level(self, chat_id, darajasi):
-        data = (darajasi, chat_id)
-        sql = "UPDATE Users SET darajasi = ? WHERE telegram_id = ?"
-        self.cursor.execute(sql, data)
-        self.conn.commit()
+        session = self.Session()
+        user = session.query(User).filter_by(telegram_id=chat_id).first()
+        if user:
+            user.darajasi = darajasi
+            session.commit()
 
     def update_user_full_name(self, chat_id, full_name):
-        data = (full_name, chat_id)
-        sql = "UPDATE Users SET full_name = ? WHERE telegram_id = ?"
-        self.cursor.execute(sql, data)
-        self.conn.commit()
+        session = self.Session()
+        user = session.query(User).filter_by(telegram_id=chat_id).first()
+        if user:
+            user.full_name = full_name
+            session.commit()
 
     def update_group(self, chat_id, group_number):
-        data = (group_number, chat_id)
-        sql = "UPDATE Users SET guruh = ? WHERE telegram_id = ?"
-        self.cursor.execute(sql, data)
-        self.conn.commit()
+        session = self.Session()
+        user = session.query(User).filter_by(telegram_id=chat_id).first()
+        if user:
+            user.guruh = group_number
+            session.commit()
 
     def select_user(self, **kwargs):
-        sql = "SELECT * FROM Users WHERE "
-        conditions = [f"{key} = ?" for key in kwargs.keys()]
-        sql += " AND ".join(conditions)
-        values = tuple(kwargs.values())
-        self.cursor.execute(sql, values)
-        return self.cursor.fetchone()
+        session = self.Session()
+        return session.query(User).filter_by(**kwargs).first()
 
     def count_users(self):
-        sql = "SELECT COUNT(*) FROM Users"
-        self.cursor.execute(sql)
-        return self.cursor.fetchone()[0]
+        session = self.Session()
+        return session.query(User).count()
 
     def update_user_username(self, username: str, telegram_id: int):
-        sql = "UPDATE Users SET username = ? WHERE telegram_id = ?"
-        self.cursor.execute(sql, (username, telegram_id))
-        self.conn.commit()
+        session = self.Session()
+        user = session.query(User).filter_by(telegram_id=telegram_id).first()
+        if user:
+            user.username = username
+            session.commit()
 
     def delete_users(self):
-        sql = "DELETE FROM Users"
-        self.cursor.execute(sql)
-        self.conn.commit()
+        session = self.Session()
+        session.query(User).delete()
+        session.commit()
 
     def drop_users(self):
-        sql = "DROP TABLE Users"
-        self.cursor.execute(sql)
-        self.conn.commit()
+        Base.metadata.drop_all(self.engine)
 
     def close(self):
-        self.conn.close()
+        self.Session().close()

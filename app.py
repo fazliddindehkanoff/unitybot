@@ -1,6 +1,4 @@
-import os
 import asyncio
-import asyncpg
 
 from aiogram import Bot, Dispatcher
 from aiogram.client.session.middlewares.request_logging import logger
@@ -41,7 +39,6 @@ async def setup_aiogram(dispatcher: Dispatcher, bot: Bot) -> None:
 
 
 async def database_connected():
-
     db.create_table_users()
 
 
@@ -49,8 +46,8 @@ async def aiogram_on_startup_polling(dispatcher: Dispatcher, bot: Bot) -> None:
     from utils.set_bot_commands import set_default_commands
     from utils.notify_admins import on_startup_notify
 
-    logger.info("Database connected")
     await database_connected()
+    logger.info("Database connected")
 
     logger.info("Starting polling")
     await setup_aiogram(bot=bot, dispatcher=dispatcher)

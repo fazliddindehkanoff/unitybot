@@ -4,9 +4,9 @@ import pandas as pd
 
 from aiogram import Router, types, F
 from aiogram.filters import Command
-from aiogram.fsm.context import FSMContext
+
+# from aiogram.fsm.context import FSMContext
 from aiogram.types import ReplyKeyboardRemove
-from filters.admin import IsBotAdminFilter
 from data.config import ADMINS, BOT_TOKEN
 from keyboards.inline.base_menu import base
 from loader import bot, db
@@ -29,7 +29,9 @@ groups = sh.get_worksheet(2)
 users = sh.get_worksheet(3)
 
 
-@router.message(Command("start"), IsBotAdminFilter(ADMINS))
+@router.message(
+    Command("start"), lambda message: str(message.from_user.id) in ADMINS
+)  # noqa
 async def get_all_users(message: types.Message):
     groups_dataframe = pd.DataFrame(groups.get_all_records())
     users_dataframe = pd.DataFrame(crm.get_all_records())
@@ -65,12 +67,17 @@ async def get_all_users(message: types.Message):
         )
 
 
-@router.message(Command("menu"), IsBotAdminFilter(ADMINS))
-async def ask_ad_content(message: types.Message, state: FSMContext):
+@router.message(
+    Command("menu"), lambda message: str(message.from_user.id) in ADMINS
+)  # noqa
+async def ask_ad_content(message: types.Message):
     await message.answer("Asosiy menu>> ", reply_markup=base.as_markup())
 
 
-@router.callback_query(lambda callback_query: callback_query.data == "home")
+@router.callback_query(
+    lambda callback_query: callback_query.data == "home",
+    lambda callback_query: str(callback_query.from_user.id) in ADMINS,
+)
 async def go_home(call: types.CallbackQuery):
     groups_dataframe = pd.DataFrame(groups.get_all_records())
     users_dataframe = pd.DataFrame(crm.get_all_records())
@@ -94,14 +101,18 @@ async def go_home(call: types.CallbackQuery):
     )
 
 
-@router.message(F.text == "◀ Orqaga", IsBotAdminFilter(ADMINS))
+@router.message(
+    F.text == "◀ Orqaga", lambda message: str(message.from_user.id) in ADMINS
+)  # noqa
 async def back_to_main_menu(message: types.Message):
     builder = ReplyKeyboardRemove()
     await message.answer(">>>", reply_markup=builder)
     await message.answer("Asosiy menu>> ", reply_markup=base.as_markup())
 
 
-@router.callback_query(F.data == "send_docs", IsBotAdminFilter(ADMINS))
+@router.callback_query(
+    F.data == "send_docs", lambda call: str(call.from_user.id) in ADMINS
+)
 async def get_documents(call: types.CallbackQuery):
     await bot.send_message(
         text="Salom Admin✋ Yuklamoqchi bo'lgan fayllarni menga yuboring..",
@@ -111,7 +122,7 @@ async def get_documents(call: types.CallbackQuery):
 
 
 @router.message(
-    IsBotAdminFilter(ADMINS),
+    lambda msg: str(msg.from_user.id) in ADMINS,
     lambda msg: db.get_user_telegram_id(msg.from_user.id)[10] == "send_docs",
 )
 async def receive_files(message: types.Message):

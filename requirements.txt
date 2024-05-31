@@ -17,6 +17,7 @@ et-xmlfile==1.1.0
 frozenlist==1.4.0
 google-auth==2.29.0
 google-auth-oauthlib==1.2.0
+greenlet==3.0.3
 gspread==6.1.2
 humanfriendly==10.0
 idna==3.4
@@ -28,6 +29,7 @@ oauthlib==3.2.2
 openpyxl==3.1.2
 packaging==23.1
 pandas==2.1.0
+psycopg2-binary==2.9.9
 pyasn1==0.6.0
 pyasn1_modules==0.4.0
 pydantic==2.2.1
@@ -40,6 +42,7 @@ requests==2.31.0
 requests-oauthlib==2.0.0
 rsa==4.9
 six==1.16.0
+SQLAlchemy==2.0.30
 structlog==23.1.0
 typing_extensions==4.7.1
 tzdata==2024.1

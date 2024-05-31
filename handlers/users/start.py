@@ -6,12 +6,12 @@ import pandas
 import gspread
 
 from datetime import datetime, timedelta
-from aiogram import Router, types, Bot
+from aiogram import Router, types
 from aiogram.filters import CommandStart
 from aiogram.fsm.context import FSMContext
 from aiogram.utils.keyboard import InlineKeyboardButton, InlineKeyboardBuilder
 
-from filters.admin import IsBotAdminFilter
+from data.config import ADMINS
 from loader import bot, db
 from keyboards.inline.menu_user import location_keyboard
 from utils.extra_datas import (
@@ -34,7 +34,9 @@ groups = sheet.get_worksheet(2)
 tests = sheet.get_worksheet(3)
 
 
-@router.message(CommandStart())
+@router.message(
+    CommandStart(), lambda message: str(message.from_user.id) not in ADMINS
+)  # noqa
 async def do_start(message: types.Message, state: FSMContext):
     telegram_id = message.from_user.id
     first_name = message.from_user.first_name
@@ -51,7 +53,7 @@ async def do_start(message: types.Message, state: FSMContext):
         else:
 
             await message.answer(
-                f"""Assalomu alaykum {full_name}\n Sizga berilgan login kiritish orqali profilingizga kiring Bir login orqali faqat bitta telegram hisob bilan kira olasiz""",  # noqa
+                f"""Assalomu alaykum {full_name}\nSizga berilgan login kiritish orqali profilingizga kiring Bir login orqali faqat bitta telegram hisob bilan kira olasiz""",  # noqa
             )
             await state.set_state(Login.student_id)
 
@@ -74,7 +76,7 @@ async def do_start(message: types.Message, state: FSMContext):
 
 
 @router.message(lambda msg: db.get_user_state(msg.from_user.id) == "login")
-async def get_login(message: types.Message, state: FSMContext, bot: Bot):
+async def get_login(message: types.Message):
     user_id = message.text.lower()
     crm_dateframe = pandas.DataFrame(crm.get_all_records())
     data = crm_dateframe[crm_dateframe["ID"] == user_id]
@@ -168,7 +170,10 @@ async def schedule_notifications():
         await asyncio.sleep(60)
 
 
-@router.callback_query(lambda callback: callback.data.startswith("test#"))
+@router.callback_query(
+    lambda callback_query: callback_query.data.startswith("test#")
+    and str(callback_query.from_user.id) not in ADMINS
+)
 async def process_callback_test(callback_query: types.CallbackQuery):
     try:
         sending_time_str = callback_query.data.split("#")[1]
@@ -205,6 +210,7 @@ async def process_callback_test(callback_query: types.CallbackQuery):
 
 @router.message(
     lambda message: db.get_user_state(message.from_user.id) == "check_location"
+    and str(message.from_user.id) not in ADMINS
 )
 async def check_location(message: types.Message):
     if not message.location:
@@ -233,7 +239,7 @@ async def check_location(message: types.Message):
         user = db.get_user_telegram_id(message.from_user.id)
 
         question_based_on_level = test_dataframe[
-            test_dataframe["darajasi"] == user[9]
+            test_dataframe["darajasi"] == user.darajasi
         ].values.tolist()
 
         if not question_based_on_level:
@@ -267,6 +273,7 @@ async def check_location(message: types.Message):
 
 @router.callback_query(
     lambda callback_query: callback_query.data.startswith("hint_ans")
+    and str(callback_query.from_user.id) not in ADMINS
 )
 async def hint_answer(call: types.CallbackQuery):
     question_id = call.data.split(":")[-1]
@@ -286,10 +293,11 @@ async def hint_answer(call: types.CallbackQuery):
     lambda message: db.get_user_state(
         telegram_id=message.from_user.id  # noqa
     ).startswith("answer")
+    and str(message.from_user.id) not in ADMINS
 )
 async def question_1(message: types.Message):
     user = db.get_user_telegram_id(telegram_id=message.from_user.id)
-    question_id = user[10].split(":")[-1]
+    question_id = user.state.split(":")[-1]
     test_dataframe = pandas.DataFrame(tests.get_all_records())
     correct_answers = (
         test_dataframe[test_dataframe["id"] == int(question_id)]["javoblar"]
@@ -302,7 +310,7 @@ async def question_1(message: types.Message):
 
     if user_answer in correct_answers_list:
         base_groups_dateframe = pandas.DataFrame(groups.get_all_records())
-        group_number = int(user[7])
+        group_number = int(user.guruh)
         group_data = base_groups_dateframe[
             base_groups_dateframe["Guruh raqami"] == group_number
         ]
@@ -315,7 +323,7 @@ async def question_1(message: types.Message):
         date_time = now.strftime("%m/%d/%Y")
         add_user_davomat = {
             "Sana": date_time,
-            "FIO": user[8],
+            "FIO": user.full_name,
             "Telefon raqam": None,
             "Ota yoki onasining raqami": None,
             "Guruh raqami": group_number,

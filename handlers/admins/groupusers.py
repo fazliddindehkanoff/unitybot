@@ -34,7 +34,10 @@ groups = sh.get_worksheet(2)
 tests = sh.get_worksheet(3)
 
 
-@router.callback_query(F.data == "tests", IsBotAdminFilter(ADMINS))
+@router.callback_query(
+    F.data == "tests",
+    lambda callback_query: str(callback_query.from_user.id) in ADMINS,  # noqa
+)
 async def send_ad_to_users(call: types.CallbackQuery, state: FSMContext):
     await state.set_state(Userinfo.group_num)
 
@@ -75,7 +78,8 @@ async def send_ad_to_users(call: types.CallbackQuery, state: FSMContext):
 
 
 @router.callback_query(
-    lambda callback_data: callback_data.data.startswith("test-group:"),
+    lambda callback_data: callback_data.data.startswith("test-group:")
+    and str(callback_data.from_user.id) in ADMINS,
 )
 async def get_group(callback_data: types.CallbackQuery, state: FSMContext):
     await callback_data.message.edit_reply_markup()
@@ -216,8 +220,7 @@ async def get_user(callback_data: types.CallbackQuery, state: FSMContext):
 
 
 @router.callback_query(
-    lambda c: c.data and c.data.startswith("hint_ans"),
-    IsBotAdminFilter(ADMINS),
+    lambda c: c.data.startswith("hint_ans") and str(c.from_user.id) in ADMINS,
 )
 async def hint_answer(call: types.CallbackQuery):
     question_id = call.data.split(":")[-1]
@@ -236,12 +239,12 @@ async def hint_answer(call: types.CallbackQuery):
 @router.message(
     lambda message: db.get_user_telegram_id(telegram_id=message.from_user.id)[
         10
-    ].startswith("answer"),
-    IsBotAdminFilter(ADMINS),
+    ].startswith("answer")
+    and str(message.from_user.id) in ADMINS,
 )
 async def question_1(message: types.Message):
     user = db.get_user_telegram_id(telegram_id=message.from_user.id)
-    data = user[10].split("-")
+    data = user.state.split("-")
     question_id = data[0].split(":")[-1]
     student_id = data[-1].split(":")[-1]
 
@@ -330,7 +333,7 @@ async def get_post(message: types.Message, state: FSMContext):
     # Forward the post to each user
     all_users = db.select_all_users()
     for row in all_users:
-        chat_id = row[4]
+        chat_id = row.telegram_id
         try:
 
             if media_type == "photo":

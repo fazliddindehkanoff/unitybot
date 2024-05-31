@@ -41,7 +41,7 @@ async def invite_to_test(current_time, earlier_time, group, db, bot):
         )
         for student in students:
             await bot.send_message(
-                chat_id=student[4],
-                text=message.format(student[8], student[7]),
+                chat_id=student.telegram_id,
+                text=message.format(student.first_name, student.last_name),
                 reply_markup=keyboard.as_markup(),
             )
