@@ -188,6 +188,11 @@ async def get_user(callback_data: types.CallbackQuery, state: FSMContext):
 
     # Filter tests based on the student's level
     matching_tests = test_dataframe[test_dataframe["darajasi"] == daraja]
+    if matching_tests.empty:
+        await callback_data.message.answer(
+            "There is no question found based on your level"
+        )
+        return
     random_test = matching_tests.sample().iloc[0]
 
     builder = InlineKeyboardBuilder()
