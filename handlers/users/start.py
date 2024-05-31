@@ -61,12 +61,14 @@ async def do_start(message: types.Message, state: FSMContext):
         db.add_user(
             first_name=first_name,
             last_name=last_name,
-            full_name=None,
+            full_name=full_name,
             darajasi=None,
             username=username,
             telegram_id=telegram_id,
             student_id=None,
             added_at=now,
+            guruh=None,
+            state=None,
         )
 
         await message.answer(
