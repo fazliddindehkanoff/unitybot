@@ -63,13 +63,13 @@ class Database:
         session = self.Session()
         return session.query(User).all()
 
-    def get_user_telegram_id(self, telegram_id: int):
+    def get_user_telegram_id(self, telegram_id: str):
         session = self.Session()
-        return session.query(User).filter_by(telegram_id=telegram_id).first()
+        return session.query(User).filter_by(telegram_id=str(telegram_id)).first()
 
-    def get_user_state(self, telegram_id: int):
+    def get_user_state(self, telegram_id: str):
         session = self.Session()
-        user = session.query(User).filter_by(telegram_id=telegram_id).first()
+        user = session.query(User).filter_by(telegram_id=str(telegram_id)).first()
         if user:
             return user.state
         return ""
@@ -78,16 +78,9 @@ class Database:
         session = self.Session()
         return session.query(User).filter_by(guruh=group_number).all()
 
-    def is_student_id(self, telegram_id: int) -> bool:
-        user = self.get_user_telegram_id(telegram_id)
+    def is_student_id(self, telegram_id: str) -> bool:
+        user = self.get_user_telegram_id(str(telegram_id))
         if user and user.student_id is not None:
-            return True
-        else:
-            return False
-
-    def is_student_full_name(self, telegram_id: int) -> bool:
-        user = self.get_user_telegram_id(telegram_id=telegram_id)
-        if user and user.full_name is not None:
             return True
         else:
             return False
@@ -99,71 +92,41 @@ class Database:
             is not None  # noqa
         )
 
-    def check_student_group(self, user_id):
-        session = self.Session()
-        user = session.query(User).filter_by(id=user_id).first()
-        if user and user.guruh:
-            return user.guruh
-        else:
-            return False
-
     def update_student_id(self, chat_id, student_id):
         session = self.Session()
-        user = session.query(User).filter_by(telegram_id=chat_id).first()
+        user = session.query(User).filter_by(telegram_id=str(chat_id)).first()
         if user:
             user.student_id = student_id
             session.commit()
 
     def update_state(self, chat_id, state):
         session = self.Session()
-        user = session.query(User).filter_by(telegram_id=chat_id).first()
+        user = session.query(User).filter_by(telegram_id=str(chat_id)).first()
         if user:
             user.state = state
             session.commit()
 
     def update_user_level(self, chat_id, darajasi):
         session = self.Session()
-        user = session.query(User).filter_by(telegram_id=chat_id).first()
+        user = session.query(User).filter_by(telegram_id=str(chat_id)).first()
         if user:
             user.darajasi = darajasi
             session.commit()
 
     def update_user_full_name(self, chat_id, full_name):
         session = self.Session()
-        user = session.query(User).filter_by(telegram_id=chat_id).first()
+        user = session.query(User).filter_by(telegram_id=str(chat_id)).first()
         if user:
             user.full_name = full_name
             session.commit()
 
     def update_group(self, chat_id, group_number):
         session = self.Session()
-        user = session.query(User).filter_by(telegram_id=chat_id).first()
+        user = session.query(User).filter_by(telegram_id=str(chat_id)).first()
         if user:
             user.guruh = group_number
             session.commit()
 
-    def select_user(self, **kwargs):
-        session = self.Session()
-        return session.query(User).filter_by(**kwargs).first()
-
     def count_users(self):
         session = self.Session()
         return session.query(User).count()
-
-    def update_user_username(self, username: str, telegram_id: int):
-        session = self.Session()
-        user = session.query(User).filter_by(telegram_id=telegram_id).first()
-        if user:
-            user.username = username
-            session.commit()
-
-    def delete_users(self):
-        session = self.Session()
-        session.query(User).delete()
-        session.commit()
-
-    def drop_users(self):
-        Base.metadata.drop_all(self.engine)
-
-    def close(self):
-        self.Session().close()
