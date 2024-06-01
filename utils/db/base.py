@@ -11,15 +11,15 @@ class User(Base):
 
     id = Column(Integer, primary_key=True)
     first_name = Column(String)
-    last_name = Column(String)
-    full_name = Column(String)
-    darajasi = Column(String)
-    state = Column(String)
-    username = Column(String)
-    telegram_id = Column(Integer, unique=True)
+    last_name = Column(String, nullable=True)
+    full_name = Column(String, nullable=True)
+    darajasi = Column(String, nullable=True)
+    state = Column(String, nullable=True)
+    username = Column(String, nullable=True)
+    telegram_id = Column(String, unique=True)
     student_id = Column(String, unique=True)
-    added_at = Column(String)
-    guruh = Column(String)
+    added_at = Column(String, nullable=True)
+    guruh = Column(String, nullable=True)
 
 
 class Database:

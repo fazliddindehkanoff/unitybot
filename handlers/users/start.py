@@ -64,11 +64,10 @@ async def do_start(message: types.Message, state: FSMContext):
             full_name=full_name,
             darajasi=None,
             username=username,
-            telegram_id=telegram_id,
+            telegram_id=str(telegram_id),
             student_id=None,
             added_at=now,
             guruh=None,
-            state=None,
         )
 
         await message.answer(
