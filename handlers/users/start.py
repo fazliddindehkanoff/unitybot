@@ -291,8 +291,8 @@ async def hint_answer(call: types.CallbackQuery):
 
 
 @router.message(
-    lambda message: db.get_user_state(
-        telegram_id=message.from_user.id  # noqa
+    lambda message: str(
+        db.get_user_state(telegram_id=message.from_user.id)  # noqa
     ).startswith("answer")
     and str(message.from_user.id) not in ADMINS
 )

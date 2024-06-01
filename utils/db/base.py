@@ -61,15 +61,19 @@ class Database:
 
     def select_all_users(self):
         session = self.Session()
-        return session.query(User).all()
+        return session.query(User).filter(User.student_id != "Admin").all()
 
     def get_user_telegram_id(self, telegram_id: str):
         session = self.Session()
-        return session.query(User).filter_by(telegram_id=str(telegram_id)).first()
+        return (
+            session.query(User).filter_by(telegram_id=str(telegram_id)).first()
+        )  # noqa
 
     def get_user_state(self, telegram_id: str):
         session = self.Session()
-        user = session.query(User).filter_by(telegram_id=str(telegram_id)).first()
+        user = (
+            session.query(User).filter_by(telegram_id=str(telegram_id)).first()
+        )  # noqa
         if user:
             return user.state
         return ""

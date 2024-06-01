@@ -15,7 +15,6 @@ from filters.admin import IsBotAdminFilter
 from loader import bot, db
 from states.userinfo import Userinfo
 from states.test import Test
-from states.post_state import Post, PostToGroup
 from keyboards.inline.buttons import builder_messages
 from keyboards.inline.base_menu import message_u, base
 from utils.extra_datas import remove_extra_whitespace
@@ -310,10 +309,12 @@ async def send_message_all(call: types.CallbackQuery, state: FSMContext):
 async def send_message_to_users(call: types.CallbackQuery, state: FSMContext):
 
     await call.message.answer(text="Post xabarni yuboring> ")
-    await state.set_state(Post.post)
+    db.update_state(call.from_user.id, "post_for_all")
 
 
-@router.message(Post.post)
+@router.message(
+    lambda msg: db.get_user_state(msg.from_user.id).startswith("post_for_all")
+)
 async def get_post(message: types.Message, state: FSMContext):
     counter = 0
     post_content = message.text
@@ -352,18 +353,18 @@ async def get_post(message: types.Message, state: FSMContext):
             counter += 1
         except Exception as e:
             # Handle any exceptions, such as users who have blocked the bot
-            print(f"Failed to send post to user :{row[4]} {str(e)}")
+            print(f"Failed to send post to user :{row.full_name} {str(e)}")
 
     await message.reply(
         f"📬Barcha xabarlar yetkazildi! Yetkazilgan xabarlar soni: {counter}",
         reply_markup=base.as_markup(),
     )
+    db.update_state(message.from_user.id, "state")
 
 
 @router.callback_query(F.data == "send_group", IsBotAdminFilter(ADMINS))
-async def get_groups_number(call: types.CallbackQuery, state: FSMContext):
+async def get_groups_number(call: types.CallbackQuery):
 
-    await state.set_state(PostToGroup.group_number)
     dataframe = pandas.DataFrame(groups.get_all_records())
     await call.message.edit_reply_markup()
     await call.answer(
@@ -406,20 +407,23 @@ async def get_groups_number(call: types.CallbackQuery, state: FSMContext):
 async def sending_post(callback_data: types.CallbackQuery, state: FSMContext):
     group_number = int(callback_data.data.split("group:")[-1])
     await state.update_data(group_number=group_number)
-
-    await state.set_state(PostToGroup.post)
+    await callback_data.message.delete()
+    db.update_state(
+        callback_data.from_user.id, f"post_for_group:{group_number}"
+    )  # noqa
     await bot.send_message(
         chat_id=callback_data.from_user.id, text="Post xabaringizni yuboring> "
     )
 
 
-@router.message(PostToGroup.post)
-async def sending_to_users(message: types.Message, state: FSMContext):
-    await state.set_state(PostToGroup.post)
-    group_data = await state.get_data()
+@router.message(
+    lambda msg: db.get_user_state(msg.from_user.id).startswith("post_for_group")  # noqa
+)
+async def sending_to_users(message: types.Message):
+    group_number_for_post = db.get_user_state(message.from_user.id).split(":")[
+        -1
+    ]  # noqa
     counter = 0
-    group_number_for_post = group_data.get("group_number")
-
     post_content = message.text
     media_file = None
     media_type = ""
@@ -436,8 +440,8 @@ async def sending_to_users(message: types.Message, state: FSMContext):
 
     # Forward the post to each user
     all_users = db.get_group_for_users(group_number=group_number_for_post)
-    for row in all_users:
-        chat_id = row[4]
+    for user in all_users:
+        chat_id = user.telegram_id
 
         try:
             if media_type == "photo":
@@ -452,10 +456,11 @@ async def sending_to_users(message: types.Message, state: FSMContext):
                 await bot.send_message(chat_id=chat_id, text=post_content)
             counter += 1
         except Exception as e:
-            print(f"Failed to send post to user :{row[4]} {str(e)}")
+            print(f"Failed to send post to user :{user.full_name} {str(e)}")
 
     response = (
         f"👥 Guruh raqami: {group_number_for_post}\n"
         f"📬 Barcha xabarlar yetkazildi! Yetkazilgan xabarlar soni: {counter}"
     )
     await message.answer(response, reply_markup=base.as_markup())
+    db.update_state(message.from_user.id, "state")
