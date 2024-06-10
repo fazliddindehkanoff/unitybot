@@ -13,7 +13,7 @@ app = Celery(
 
 app.conf.beat_schedule = {
     "run-every-second": {
-        "task": "tasks.send_telegram_message",
+        "task": "tasks.notify_students",
         "schedule": 1.0,  # This sets the task to run every second
     },
 }
