@@ -8,10 +8,7 @@ app = Celery(
 
 app.conf.beat_schedule = {
     "run-every-second": {
-        "task": "tasks.every_second_task",
+        "task": "task.celery_tasks.every_second_task",
         "schedule": 1.0,  # This sets the task to run every second
     },
 }
-
-# Automatic task discovery
-app.autodiscover_tasks()
