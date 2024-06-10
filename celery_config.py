@@ -14,4 +14,4 @@ app.conf.beat_schedule = {
 }
 
 # Automatic task discovery
-app.autodiscover_tasks(lambda: ["tasks"])
+app.autodiscover_tasks(lambda: ["."])
