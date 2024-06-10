@@ -1,4 +1,5 @@
 from celery import Celery, shared_task
+from loader import groups
 
 app = Celery(
     "my_bot",
@@ -16,4 +17,4 @@ app.conf.beat_schedule = {
 
 @shared_task
 def send_telegram_message():
-    print("TEST")
+    print(groups.col_count)
