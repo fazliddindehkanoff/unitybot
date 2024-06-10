@@ -15,7 +15,7 @@ services:
 
   celery:
     build: .
-    command: celery -A tasks worker -l info
+    command: celery -A loader worker -l info
     volumes:
       - .:/home/user/app/
     depends_on:
@@ -23,7 +23,7 @@ services:
 
   celery-beat:
     build: .
-    command: celery -A tasks beat -l info
+    command: celery -A loader beat -l info
     volumes:
       - .:/home/user/app/
     depends_on:
