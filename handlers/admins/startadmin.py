@@ -1,32 +1,18 @@
-import gspread
-import json
 import pandas as pd
 
 from aiogram import Router, types, F
 from aiogram.filters import Command
-
-# from aiogram.fsm.context import FSMContext
 from aiogram.types import ReplyKeyboardRemove
+
 from data.config import ADMINS, BOT_TOKEN
 from keyboards.inline.base_menu import base
-from loader import bot, db
-
+from loader import bot, db, crm, groups
 
 router = Router()
 
+documents = "sh.get_worksheet(1)"
 
-with open("credentials.json", "r") as file:
-    key_data = json.load(file)
-
-gc = gspread.service_account_from_dict(key_data)
-
-sh = gc.open("base")
-
-documents = sh.get_worksheet(1)
-pages = len(sh.worksheets())
-crm = sh.get_worksheet(0)
-groups = sh.get_worksheet(2)
-users = sh.get_worksheet(3)
+# StatusChange Date, Izoh
 
 
 @router.message(
@@ -137,13 +123,17 @@ async def receive_files(message: types.Message):
         # Use the file name from the message
         file_name = message.document.file_name
 
+        # Download the file to the media/files directory
+        file_download_path = f"media/files/{file_name}"
+        await bot.download_file(file_path, file_download_path)
+
         # Add the document information to your documents
         add_document = {"nomi": file_name, "link": file_link}
         documents.append_row(list(add_document.values()))
 
         # Send a success message
         await message.reply(
-            text="✅ Bazaga muvaffiqiyatli joylandi.",
+            text="✅ Bazaga muvaffaqiyatli joylandi.",
             reply_markup=base.as_markup(),
         )
         db.update_state(chat_id=message.from_user.id, state="state")

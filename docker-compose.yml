@@ -6,8 +6,28 @@ services:
     env_file: .env
     depends_on:
       - db
+      - redis
     networks:
       - bot-network
+
+  redis:
+    image: redis:alpine
+
+  celery:
+    build: .
+    command: celery -A celery_config worker -l info
+    volumes:
+      - .:/home/user/app/
+    depends_on:
+      - redis
+
+  celery-beat:
+    build: .
+    command: celery -A celery_config beat -l info
+    volumes:
+      - .:/home/user/app/
+    depends_on:
+      - redis
 
   db:
     image: postgres:13

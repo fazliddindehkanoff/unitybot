@@ -1,20 +1,14 @@
 import datetime
-import json
-
-import gspread
 import pandas
 
 from aiogram import Router, types, F
-from aiogram.fsm.context import FSMContext
 from aiogram.types import InlineKeyboardButton
 from aiogram_widgets.pagination import KeyboardPaginator
 from aiogram.utils.keyboard import InlineKeyboardBuilder
 
 from data.config import ADMINS
 from filters.admin import IsBotAdminFilter
-from loader import bot, db
-from states.userinfo import Userinfo
-from states.test import Test
+from loader import bot, db, crm, tests, groups, davomat
 from keyboards.inline.buttons import builder_messages
 from keyboards.inline.base_menu import message_u, base
 from utils.extra_datas import remove_extra_whitespace
@@ -22,23 +16,12 @@ from utils.extra_datas import remove_extra_whitespace
 
 router = Router()
 
-with open("credentials.json", "r") as file:
-    key_data = json.load(file)
-
-gc = gspread.service_account_from_dict(key_data)
-sh = gc.open("base")
-
-crm = sh.get_worksheet(0)
-groups = sh.get_worksheet(2)
-tests = sh.get_worksheet(3)
-
 
 @router.callback_query(
     F.data == "tests",
     lambda callback_query: str(callback_query.from_user.id) in ADMINS,  # noqa
 )
-async def send_ad_to_users(call: types.CallbackQuery, state: FSMContext):
-    await state.set_state(Userinfo.group_num)
+async def send_ad_to_users(call: types.CallbackQuery):
 
     if call.message.text != "groups":
         await call.answer(
@@ -80,14 +63,10 @@ async def send_ad_to_users(call: types.CallbackQuery, state: FSMContext):
     lambda callback_data: callback_data.data.startswith("test-group:")
     and str(callback_data.from_user.id) in ADMINS,
 )
-async def get_group(callback_data: types.CallbackQuery, state: FSMContext):
+async def get_group(callback_data: types.CallbackQuery):
     await callback_data.message.edit_reply_markup()
 
     group_number = int(callback_data.data.split("test-group:")[-1])
-
-    await state.update_data(group_num=group_number)
-    await state.set_state(Userinfo.student_name)
-
     # Fetch the group data
     groups_df = pandas.DataFrame(groups.get_all_records())
     group_data = groups_df[groups_df["Guruh raqami"] == group_number].iloc[0]
@@ -96,7 +75,6 @@ async def get_group(callback_data: types.CallbackQuery, state: FSMContext):
     teacher = group_data["Ustoz"]
     total_students = group_data["Talaba soni"]
     group_id = group_data["ID"]
-    group_num_n = group_data["Guruh raqami"]
     status = group_data["Status"]
     language = group_data["Kurs tili"]
     monthly_payment = group_data["Oylik to'lov"]
@@ -158,7 +136,7 @@ async def get_group(callback_data: types.CallbackQuery, state: FSMContext):
             f"👩‍🏫 O'qituvchi: {teacher}\n"
             f"👩‍🎓 Jami o'quvchilar: {total_students}\n"
             f"🆔 Guruh ID: {group_id}\n"
-            f"🔢 Guruh raqami: {group_num_n}\n"
+            f"🔢 Guruh raqami: {group_number}\n"
             f"✅ Status: {status}\n"
             f"🇺🇿 Tili: {language}\n"
             f"💲 Oylik to'lovi: {monthly_payment} so'm\n"
@@ -175,11 +153,9 @@ async def get_group(callback_data: types.CallbackQuery, state: FSMContext):
 
 @router.callback_query(
     lambda callback_data: callback_data.data.startswith("student:"),
-    Userinfo.student_name,
 )
-async def get_user(callback_data: types.CallbackQuery, state: FSMContext):
+async def get_user(callback_data: types.CallbackQuery):
     student_id = callback_data.data.split("student:")[-1]
-    await state.set_state(Test.Q1)
 
     # Fetch data only once and outside the function if possible
     test_dataframe = pandas.DataFrame(tests.get_all_records())
@@ -258,7 +234,6 @@ async def question_1(message: types.Message):
     user_answer = remove_extra_whitespace(message.text.lower())
 
     if user_answer in correct_answers_list:
-        davomat = sh.get_worksheet(4)
         crm_df = pandas.DataFrame(crm.get_all_records())
         student = crm_df[crm_df["ID"] == student_id]
 
@@ -266,21 +241,17 @@ async def question_1(message: types.Message):
             await message.reply("Student not found.")
             return
 
-        student_name = student["Ism va Familya"].values[0]
+        group_number = student["Guruh raqami"].values[0]
         date_time = datetime.datetime.now().strftime("%m/%d/%Y")
 
         add_user_davomat = {
             "Sana": date_time,
-            "FIO": student_name,
-            "Telefon raqam": None,
-            "Ota yoki onasining raqami": None,
-            "Guruh raqami": None,
-            "Ustoz": None,
-            "Kunlari": None,
-            "Vaqti": None,
-            "Status": "Present",
+            "Student ID": student_id,
+            "Guruh raqami": group_number,
             "Bog'lanish natijasi": None,
             "Sabab": None,
+            "Status": "Present",
+            "Bog'lanish natijasi": None,
         }
         davomat.append_row(list(add_user_davomat.values()))
         db.update_state(message.from_user.id, "state")
@@ -294,7 +265,7 @@ async def question_1(message: types.Message):
 
 
 @router.callback_query(F.data == "messages", IsBotAdminFilter(ADMINS))
-async def send_message_all(call: types.CallbackQuery, state: FSMContext):
+async def send_message_all(call: types.CallbackQuery):
 
     await call.message.delete()
     builder_messages.adjust(1)
@@ -306,7 +277,7 @@ async def send_message_all(call: types.CallbackQuery, state: FSMContext):
 
 
 @router.callback_query(F.data == "send_all", IsBotAdminFilter(ADMINS))
-async def send_message_to_users(call: types.CallbackQuery, state: FSMContext):
+async def send_message_to_users(call: types.CallbackQuery):
 
     await call.message.answer(text="Post xabarni yuboring> ")
     db.update_state(call.from_user.id, "post_for_all")
@@ -315,7 +286,7 @@ async def send_message_to_users(call: types.CallbackQuery, state: FSMContext):
 @router.message(
     lambda msg: db.get_user_state(msg.from_user.id).startswith("post_for_all")
 )
-async def get_post(message: types.Message, state: FSMContext):
+async def get_post(message: types.Message):
     counter = 0
     post_content = message.text
     media_file = None
@@ -404,9 +375,8 @@ async def get_groups_number(call: types.CallbackQuery):
 @router.callback_query(
     lambda callback_data: callback_data.data.startswith("group:"),
 )
-async def sending_post(callback_data: types.CallbackQuery, state: FSMContext):
+async def sending_post(callback_data: types.CallbackQuery):
     group_number = int(callback_data.data.split("group:")[-1])
-    await state.update_data(group_number=group_number)
     await callback_data.message.delete()
     db.update_state(
         callback_data.from_user.id, f"post_for_group:{group_number}"

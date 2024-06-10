@@ -1,9 +1,6 @@
 import asyncio
 import random
-import json
-
 import pandas
-import gspread
 
 from datetime import datetime, timedelta
 from aiogram import Router, types
@@ -12,7 +9,7 @@ from aiogram.fsm.context import FSMContext
 from aiogram.utils.keyboard import InlineKeyboardButton, InlineKeyboardBuilder
 
 from data.config import ADMINS
-from loader import bot, db
+from loader import bot, db, crm, groups, tests, davomat
 from keyboards.inline.menu_user import location_keyboard
 from utils.extra_datas import (
     invite_to_test,
@@ -23,15 +20,6 @@ from states.login_state import Login
 
 
 router = Router()
-
-with open("credentials.json", "r") as file:
-    key_data = json.load(file)
-
-gc = gspread.service_account_from_dict(key_data)
-sheet = gc.open("base")
-crm = sheet.get_worksheet(0)
-groups = sheet.get_worksheet(2)
-tests = sheet.get_worksheet(3)
 
 
 @router.message(
@@ -318,7 +306,6 @@ async def question_1(message: types.Message):
         teacher = group_data["Ustoz"].values[0]
         date = group_data["Kunlari"].values[0]
         time = group_data["Vaqti"].values[0]
-        davomat = sheet.get_worksheet(4)
 
         now = datetime.now()
         date_time = now.strftime("%m/%d/%Y")
