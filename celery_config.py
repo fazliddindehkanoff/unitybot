@@ -6,5 +6,12 @@ app = Celery(
     backend="redis://redis:6379/0",
 )
 
-# Assuming tasks.py is in the same directory, or adjust imports accordingly
-app.autodiscover_tasks(["tasks.py"])
+app.conf.beat_schedule = {
+    "run-every-second": {
+        "task": "tasks.every_second_task",
+        "schedule": 1.0,  # This sets the task to run every second
+    },
+}
+
+# Automatic task discovery
+app.autodiscover_tasks(lambda: ["tasks"])
