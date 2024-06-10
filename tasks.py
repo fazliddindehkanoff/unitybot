@@ -20,7 +20,7 @@ app.conf.beat_schedule = {
 
 
 @shared_task
-async def notify_students():
+def notify_students():
     current_time = datetime.now()
     today_day_number = current_time.weekday()
     day_names = {
@@ -47,7 +47,7 @@ async def notify_students():
         lesson_days_in_number = [day_names[day] for day in lesson_days]
 
         if "Har kuni" in lesson_days:
-            await invite_to_test(
+            invite_to_test(
                 current_time=current_time,
                 earlier_time=earlier_time,
                 group=group,
@@ -58,7 +58,7 @@ async def notify_students():
             print(earlier_time)
 
         if today_day_number in lesson_days_in_number:
-            await invite_to_test(
+            invite_to_test(
                 current_time=current_time,
                 earlier_time=earlier_time,
                 group=group,

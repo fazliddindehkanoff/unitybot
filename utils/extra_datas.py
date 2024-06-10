@@ -28,7 +28,7 @@ def remove_extra_whitespace(text):
     return re.sub(r"\s+", " ", text).strip()
 
 
-async def invite_to_test(current_time, earlier_time, group, db, bot):
+def invite_to_test(current_time, earlier_time, group, db, bot):
     message = "Hurmatli {}, {} guruhida dars boshlanishiga 30 daqiqa qoldi Test ishlashni unutmang, aks holda bugungi darsga kelmagan deb belgilanasiz\nTest ishlash uchun 1 soat vaqtingiz bor!"  # noqa
     if current_time.strftime("%H:%M") == earlier_time:
         students = db.get_group_for_users(str(group["Guruh raqami"]))
@@ -40,7 +40,7 @@ async def invite_to_test(current_time, earlier_time, group, db, bot):
             )
         )
         for student in students:
-            await bot.send_message(
+            bot.send_message(
                 chat_id=student.telegram_id,
                 text=message.format(student.first_name, student.last_name),
                 reply_markup=keyboard.as_markup(),
