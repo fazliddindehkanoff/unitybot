@@ -3,7 +3,6 @@ import asyncio
 from aiogram import Bot, Dispatcher
 from aiogram.client.session.middlewares.request_logging import logger
 from loader import db
-from handlers.users.start import schedule_notifications
 
 
 def setup_handlers(dispatcher: Dispatcher) -> None:
@@ -53,8 +52,6 @@ async def aiogram_on_startup_polling(dispatcher: Dispatcher, bot: Bot) -> None:
     await setup_aiogram(bot=bot, dispatcher=dispatcher)
     await on_startup_notify(bot=bot)
     await set_default_commands(bot=bot)
-    logger.info("Notify students starting...")
-    asyncio.create_task(schedule_notifications())
 
 
 async def aiogram_on_shutdown_polling(dispatcher: Dispatcher, bot: Bot):
