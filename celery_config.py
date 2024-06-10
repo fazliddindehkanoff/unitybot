@@ -7,4 +7,4 @@ app = Celery(
 )
 
 # Assuming tasks.py is in the same directory, or adjust imports accordingly
-app.autodiscover_tasks(["."])
+app.autodiscover_tasks(["tasks.py"])
