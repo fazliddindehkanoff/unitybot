@@ -1,5 +1,4 @@
 import pandas
-
 from datetime import datetime, timedelta
 from celery import Celery, shared_task
 from celery.schedules import schedule
@@ -13,9 +12,9 @@ app = Celery(
 )
 
 app.conf.beat_schedule = {
-    "run-every-second": {
+    "run-every-minute": {
         "task": "tasks.send_telegram_message",
-        "schedule": schedule(60.0),
+        "schedule": schedule(run_every=300.0),
     },
 }
 
